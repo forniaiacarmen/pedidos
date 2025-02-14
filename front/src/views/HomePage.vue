@@ -41,36 +41,37 @@
       <h1>Lista de Pedidos</h1>
 
       <h2>Pedidos Pendientes</h2>
-      <div class="column">
-        <div v-for="pedido in pedidosPendientes" :key="pedido.id" class="pedido">
-          <p><strong>Nombre:</strong> {{ pedido.nombre }}</p>
-          <p><strong>Teléfono:</strong> {{ pedido.telefono }}</p>
-          <p><strong>Producto:</strong> {{ pedido.producto }}</p>
-          <p><strong>Fecha de Recogida:</strong> {{ formatearFecha(pedido.fecha_recogida) }}</p>
-          <p><strong>Estado:</strong> {{ pedido.estado }}</p>
-          <button @click="eliminarPedido(pedido.id)" id="btn-eliminar">Eliminar</button>
-          <button @click="editarPedido(pedido)" id="btn-editar">Editar</button>
-          <button @click="cambiarEstado(pedido)" id="btn-cambiarestado">
-            Cambiar a {{ pedido.estado === 'pendiente' ? 'Servido' : 'Pendiente' }}
-          </button>
-        </div>
-      </div>
+<div class="column">
+  <div v-for="pedido in pedidosPendientes" :key="pedido.id" class="pedido">
+    <p><strong>Nombre:</strong> {{ pedido.nombre }}</p>
+    <p><strong>Teléfono:</strong> {{ pedido.telefono }}</p>
+    <p><strong>Producto:</strong> {{ pedido.producto }}</p>
+    <p><strong>Fecha de Recogida:</strong> {{ formatearFecha(pedido.fecha_recogida) }}</p>
+    <p><strong>Estado:</strong> {{ pedido.estado }}</p>
+    <button @click="eliminarPedido(pedido.id)" id="btn-eliminar">Eliminar</button>
+    <button @click="editarPedido(pedido)" id="btn-editar">Editar</button>
+    <button @click="cambiarEstado(pedido)" id="btn-cambiarestado">
+      Cambiar a {{ pedido.estado === 'pendiente' ? 'Servido' : 'Pendiente' }}
+    </button>
+  </div>
+</div>
 
-      <h2>Pedidos Servidos</h2>
-      <div class="column">
-        <div v-for="pedido in pedidosServidos" :key="pedido.id" class="pedido">
-          <p><strong>Nombre:</strong> {{ pedido.nombre }}</p>
-          <p><strong>Teléfono:</strong> {{ pedido.telefono }}</p>
-          <p><strong>Producto:</strong> {{ pedido.producto }}</p>
-          <p><strong>Fecha de Recogida:</strong> {{ formatearFecha(pedido.fecha_recogida) }}</p>
-          <p><strong>Estado:</strong> {{ pedido.estado }}</p>
-          <button @click="eliminarPedido(pedido.id)" id="btn-eliminar">Eliminar</button>
-          <button @click="editarPedido(pedido)" id="btn-editar">Editar</button>
-          <button @click="cambiarEstado(pedido)">
-            Cambiar a {{ pedido.estado === 'pendiente' ? 'Servido' : 'Pendiente' }}
-          </button>
-        </div>
-      </div>
+<h2>Pedidos Servidos</h2>
+<div class="column">
+  <div v-for="pedido in pedidosServidos" :key="pedido.id" class="pedido">
+    <p><strong>Nombre:</strong> {{ pedido.nombre }}</p>
+    <p><strong>Teléfono:</strong> {{ pedido.telefono }}</p>
+    <p><strong>Producto:</strong> {{ pedido.producto }}</p>
+    <p><strong>Fecha de Recogida:</strong> {{ formatearFecha(pedido.fecha_recogida) }}</p>
+    <p><strong>Estado:</strong> {{ pedido.estado }}</p>
+    <button @click="eliminarPedido(pedido.id)" id="btn-eliminar">Eliminar</button>
+    <button @click="editarPedido(pedido)" id="btn-editar">Editar</button>
+    <button @click="cambiarEstado(pedido)">
+      Cambiar a {{ pedido.estado === 'pendiente' ? 'Servido' : 'Pendiente' }}
+    </button>
+  </div>
+</div>
+
 
       <div v-if="pedidoEditar">
         <h3>Editar Pedido</h3>
@@ -141,7 +142,10 @@ export default {
     },
     pedidosServidos() {
       return this.pedidos.filter(pedido => pedido.estado === 'servido');
-    }
+    },
+    pedidosActivos() {
+    return this.pedidos.filter(pedido => pedido.estado !== 'eliminado');
+  }
   },
   mounted() {
     this.obtenerPedidos();
@@ -176,17 +180,24 @@ export default {
       this.pedidoAEliminar = this.pedidos.find(pedido => pedido.id === id); // Guardamos el pedido a eliminar
       this.showModal = true;  // Mostramos el modal de confirmación
 },
-
 confirmarEliminacion() {
   if (this.pedidoAEliminar) {
+    // Realizar una petición PUT para cambiar el estado a "eliminado"
     axios
-      .delete(`http://localhost:3000/api/pedidos/${this.pedidoAEliminar.id}`)
+      .put(`http://localhost:3000/api/pedidos/estado/${this.pedidoAEliminar.id}`, {
+        estado: 'eliminado'  // Cambiar el estado a "eliminado"
+      })
       .then(() => {
-        this.pedidos = this.pedidos.filter(pedido => pedido.id !== this.pedidoAEliminar.id);
-        this.showModal = false;  // Ocultamos el modal después de la eliminación
+        // Actualizar la lista de pedidos en el frontend sin hacer una nueva solicitud al servidor
+        this.pedidos = this.pedidos.map(pedido =>
+          pedido.id === this.pedidoAEliminar.id
+            ? { ...pedido, estado: 'eliminado' }
+            : pedido
+        );
+        this.showModal = false;  // Ocultar el modal después de la actualización
       })
       .catch((error) => {
-        console.error('Error al eliminar el pedido:', error);
+        console.error('Error al cambiar el estado del pedido:', error);
       });
   }
 },

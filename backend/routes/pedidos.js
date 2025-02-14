@@ -65,9 +65,9 @@ router.put('/:id', (req, res) => {
   });
 });
 
+
 // Cambiar el estado de un pedido (de pendiente a servido y viceversa)
-// Cambiar el estado de un pedido (de pendiente a servido y viceversa)
-// Cambiar el estado de un pedido (de pendiente a servido y viceversa)
+// Cambiar el estado del pedido a "eliminado"
 router.put('/estado/:id', (req, res) => {
   const nuevoEstado = req.body.estado;  // Recibimos el estado para actualizar
   const query = 'UPDATE pedidos SET estado = ? WHERE id = ?';
@@ -84,6 +84,7 @@ router.put('/estado/:id', (req, res) => {
     res.json({ id: req.params.id, estado: nuevoEstado });
   });
 });
+
 
 
 
